@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>RSA 密钥生成 + 加密解密（带独立密文输入）</title>
+  <script src="https://cdn.jsdelivr.net/npm/jsencrypt@3.0.0/bin/jsencrypt.min.js"></script>
+  <style>
+    body { max-width: 700px; margin: 40px auto; font-family: Arial, sans-serif; }
+    textarea { width: 100%; height: 80px; margin-bottom: 10px; font-family: monospace; }
+    button { padding: 8px 16px; margin-bottom: 20px; }
+    h2 { margin-top: 30px; }
+    .key-block { background: #f9f9f9; padding: 10px; border: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+
+  <h2>🔑 生成 1024-bit RSA 密钥对</h2>
+  <button onclick="generateKeys()">生成密钥对</button>
+  <div class="key-block">
+    <strong>公钥（Public Key）:</strong>
+    <textarea id="publicKey" readonly placeholder="点击生成后显示公钥"></textarea>
+    <strong>私钥（Private Key）:</strong>
+    <textarea id="privateKey" readonly placeholder="点击生成后显示私钥"></textarea>
+  </div>
+
+  <h2>🔐 明文输入</h2>
+  <textarea id="plainText" placeholder="输入要加密的内容（如 abc 或 你好）"></textarea>
+  <button onclick="doEncrypt()">加密 →</button>
+
+  <h2>密文输出（Base64）</h2>
+  <textarea id="cipherOutput" placeholder="这里显示加密后的密文"></textarea>
+
+  <h2>🔓 独立密文输入</h2>
+  <textarea id="cipherInput" placeholder="在此粘贴要解密的密文"></textarea>
+  <button onclick="doDecrypt()">← 解密</button>
+
+  <h2>解密输出（明文）</h2>
+  <textarea id="decryptedText" placeholder="这里显示解密后的明文"></textarea>
+
+<script>
+  let encryptor, publicKeyPEM, privateKeyPEM;
+
+  function generateKeys() {
+    encryptor = new JSEncrypt({ default_key_size: 1024 });
+    encryptor.getKey();
+    publicKeyPEM = encryptor.getPublicKey();
+    privateKeyPEM = encryptor.getPrivateKey();
+
+    document.getElementById('publicKey').value = publicKeyPEM;
+    document.getElementById('privateKey').value = privateKeyPEM;
+    document.getElementById('cipherOutput').value = '';
+    document.getElementById('cipherInput').value = '';
+    document.getElementById('decryptedText').value = '';
+  }
+
+  function doEncrypt() {
+    if (!encryptor) {
+      alert('请先点击“生成密钥对”');
+      return;
+    }
+    const plain = document.getElementById('plainText').value;
+    if (!plain) {
+      alert('请输入明文');
+      return;
+    }
+    const cipher = encryptor.encrypt(plain);
+    if (!cipher) {
+      alert('加密失败：文本过长或密钥错误');
+      return;
+    }
+    document.getElementById('cipherOutput').value = cipher;
+  }
+
+  function doDecrypt() {
+    if (!encryptor) {
+      alert('请先点击“生成密钥对”');
+      return;
+    }
+    const cipher = document.getElementById('cipherInput').value.trim();
+    if (!cipher) {
+      alert('请输入要解密的密文');
+      return;
+    }
+    const decryptor = new JSEncrypt();
+    decryptor.setPrivateKey(privateKeyPEM);
+    const result = decryptor.decrypt(cipher);
+    if (result === false) {
+      alert('解密失败：密文或私钥有误');
+      return;
+    }
+    document.getElementById('decryptedText').value = result;
+  }
+</script>
+
+</body>
+</html>
